@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os, sys
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -29,10 +30,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+ATOMIC_REQUESTS = True
 
 # Application definition
 
 INSTALLED_APPS = [
+    'phonenumber_field',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -131,3 +134,13 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'users.User'
+
+# Twilio
+TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID')
+TWILIO_API_SECRET = config('TWILIO_API_SECRET')
+TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER')
+
+#Login Settings
+OTP_TIMEOUT = 5 #in minutes
