@@ -53,7 +53,6 @@ class ProductListSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     images = serializers.SerializerMethodField(read_only=True)
     primary_image = serializers.SerializerMethodField()
-    size = serializers.SerializerMethodField(required=False)
     skus = ProductSKUSerializer(many=True, required=False)
 
     image_files = serializers.ListField(
@@ -66,7 +65,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'description', 'price', 'category', 
-            'inStock', 'featured', 'youtubeUrl', 'createdAt', 'deleted_at', 'images', 'primary_image','size', 'skus','image_files']
+            'inStock', 'featured', 'youtubeUrl', 'createdAt', 'deleted_at', 'images', 'primary_image', 'skus','image_files']
 
     def get_primary_image(self, obj):
         request = self.context.get('request')
@@ -82,38 +81,6 @@ class ProductSerializer(serializers.ModelSerializer):
             if image.image and request:
                 images.append(request.build_absolute_uri(image.image.url))
         return images
-    
-    def get_skus(self, obj):
-        skus = []
-        for sku in obj.skus.all():
-            skus.append({
-                'size': sku.size.name,
-                'color': sku.color.name,
-                'stock': sku.stock
-            })
-        return skus
-
-    def get_size(self, obj):
-        sizes = []
-        for sku in obj.skus.all():
-            size_name = sku.size.name
-            if size_name not in sizes:
-                sizes.append(size_name)
-        return sizes
-    
-    def get_sizeStock(self, obj):
-        size_stock = {}
-        for sku in obj.skus.all():
-            size_stock[sku.size.name] = sku.stock
-        return size_stock
-    
-    def get_colors(self, obj):
-        colors = []
-        for sku in obj.skus.all():
-            color_name = sku.color.name
-            if color_name not in colors:
-                colors.append(color_name)
-        return colors
     
     def update(self, instance, validated_data):
         images_data = validated_data.pop('image_files', [])
