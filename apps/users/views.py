@@ -15,7 +15,7 @@ def connection_status(request):
     """
     View to check the connection status.
     """
-    return JsonResponse({"status": "connected"}, status=201)
+    return JsonResponse({"status": "connected"}, status=200)
 
 def generate_otp(user):
     code = ''.join(secrets.choice("0123456789") for _ in range(6))
