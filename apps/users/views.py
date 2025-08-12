@@ -78,7 +78,7 @@ class VerifyOTPView(GenericAPIView):
                     }, status = 200)
             except Exception as e:
                 return JsonResponse({"error": str(e)}, status=500)
-        return JsonResponse(serializer.errors, status=400)
+        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class UserInfoView(GenericAPIView):
     permission_classes = [IsAuthenticated]
