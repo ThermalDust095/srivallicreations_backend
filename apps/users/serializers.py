@@ -1,6 +1,11 @@
 from rest_framework import serializers
 from phonenumber_field.serializerfields import PhoneNumberField
 from .models import User, OTPVerification
+from rest_framework_simplejwt.tokens import UntypedToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class phoneNumberSerializer(serializers.Serializer):
     phone = PhoneNumberField(required=True, allow_blank=False)
@@ -30,3 +35,11 @@ class verifyPhoneNumberSerializer(serializers.Serializer):
         qset = OTPVerification.objects.filter(user=user).latest('created_at')
         qset.check_verification(security_code=otp)
         return validated_data
+    
+class UserInfoSerializer(serializers.Serializer):
+    phone = serializers.CharField()
+    role = serializers.SerializerMethodField()
+    phone_verified = serializers.BooleanField()
+
+    def get_role(self, obj):
+        return "admin" if obj.is_admin else "customer"

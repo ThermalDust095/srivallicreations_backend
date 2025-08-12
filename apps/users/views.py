@@ -2,11 +2,15 @@ from django.http import JsonResponse
 from twilio.rest import Client
 from django.conf import settings
 from rest_framework.generics import GenericAPIView
-from .serializers import phoneNumberSerializer, verifyPhoneNumberSerializer
+from .serializers import phoneNumberSerializer, verifyPhoneNumberSerializer, UserInfoSerializer
 from .models import User, OTPVerification
 from django.utils import timezone
 from datetime import timedelta
 import secrets
+from rest_framework_simplejwt.tokens import RefreshToken
+from users.permissions import IsAdmin
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 
 client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_API_SECRET)
 
@@ -38,14 +42,18 @@ class SendOtpView(GenericAPIView):
         if serializer.is_valid():
             phone_number = serializer.validated_data['phone']
             try:
-                user, _ = User.objects.update_or_create(phone=phone_number, is_authenticated=False)
+                user, _ = User.objects.update_or_create(phone=phone_number)
                 otp = generate_otp(user)
                 message = client.messages.create(
                     body=f"Your OTP is {otp}",  # Replace with actual OTP generation logic
                     from_=settings.TWILIO_PHONE_NUMBER,
                     to=str(phone_number)
                 )
-                return JsonResponse({"message": "OTP sent successfully", "sid": message.sid}, status=200)
+                return JsonResponse({
+                    "message": "OTP sent successfully", 
+                    "sid": message.sid,
+                }, 
+                status=200)
             except Exception as e:
                 return JsonResponse({"error": str(e)}, status=500)
         
@@ -60,8 +68,27 @@ class VerifyOTPView(GenericAPIView):
             try:
                 phone_number = serializer.validated_data['phone']
                 user = User.objects.get(phone = phone_number)
-                user.is_authenticated = True
-                return JsonResponse({"message": "Authentication Sucessfull!"}, status = 200)
+                user.phone_verified = True
+                user.save()
+                refresh = RefreshToken.for_user(user)
+                return JsonResponse({
+                    "message": "Authentication Sucessfull!",
+                    "refresh_token": str(refresh),
+                    "access_token" : str(refresh.access_token),
+                    }, status = 200)
             except Exception as e:
                 return JsonResponse({"error": str(e)}, status=500)
         return JsonResponse(serializer.errors, status=400)
+    
+class UserInfoView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            serializer = UserInfoSerializer(request.user)
+            return JsonResponse(serializer.data)
+        except Exception:
+            return JsonResponse(
+                {"detail": "An error occurred while processing the request."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

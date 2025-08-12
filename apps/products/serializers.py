@@ -129,18 +129,18 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class ProductCreateSerializer(serializers.ModelSerializer):
     skus = serializers.JSONField(write_only=True, required=False)
-    images = serializers.ListField(
+    image_files = serializers.ListField(
         child=serializers.ImageField(), write_only=True, required=False
     )
 
     class Meta:
         model = Product
         fields = ['id', 'name', 'description', 'price', 'category', 'inStock', 'featured',
-                  'youtubeUrl', 'skus', 'images']
+                  'youtubeUrl', 'skus', 'image_files']
 
     def create(self, validated_data):
         skus_data = validated_data.pop('skus', [])
-        images_data = validated_data.pop('images', [])
+        images_data = validated_data.pop('image_files', [])
 
         product = Product.objects.create(**validated_data)
 
